@@ -1,0 +1,105 @@
+#parse( "tpl/common/incCommon.vm" )
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
+<title>Short URL</title>
+<style>
+#wrap{ width:700px; margin:150px auto; text-align:center;}
+#urlList{ list-style:none; padding:5px; text-align:left;}
+</style>
+<script type="text/javascript" src="$!CTX_JS_PTH/js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript">
+var J = jQuery.noConflict()
+    , Template = function( template ){
+        var _template = template
+            , _pattern = /(#\[(.*?)\])/g
+            , _patternObject = (function( str ){
+                if( typeof str !== "string" ) return;
+    
+                var obj = {}
+                    , vals = str.split( _pattern );
+    
+                for( var val in vals ){
+                    var match = _pattern.exec( vals[val] );
+    
+                    match && ( obj[match[2]] = match[1] );
+                }
+    
+                return obj;
+            })( _template );
+    
+        return {
+            parse: function( o ){
+                if( typeof _template !== "string" ) return;
+    
+                var temp = template;
+    
+                for( var val in o )
+                    temp = temp.split( _patternObject[val] ).join( o[val] || "" );
+    
+                return temp.replace( _pattern, "" );
+            }
+        };
+    }
+    , textTemplate = [ "<li>", "<a id='longUrl#[index]' href='#[shortUrl]' target='_blank'>#[shortUrl]<a>"
+                       , " <button type='button' name='copyBtn' value='#[index]'>URL 복사</button>"
+                       , "</li>" ]
+    , template = new Template( textTemplate.join('') );
+    
+    
+    
+J( document ).ready(function(){
+    var JlongUrl = J( "#longUrl" );
+    
+    J.ajaxSetup({
+        cache: false
+        , async: true
+    });
+    
+    J( "body" )
+            .on( "submit", "#f", function(e){
+                var longUrl = JlongUrl.val();
+                
+                if( !longUrl ){
+                    alert( "url을 입력 하세요" );
+                    JlongUrl.focus();
+                    return false;
+                }
+                
+                J.getJSON( "test.UrlAction.do"
+                , { method: J( "#method" ).val(), longUrl: longUrl }
+                , function(data){
+                    var textElement = template.parse({ index: 1, shortUrl: data.short_url || "" });
+
+                    J( "#urlList" ).html( textElement );
+                });
+                
+                return false;
+            })
+            .on( "click", "button[name='copyBtn']", function(e){
+                var clipBoard = window.clipboardData
+                    , url = J( "#longUrl" + this.value ).text();
+                
+                clipBoard ? clipBoard.setData( "Text", url ) : prompt( "Ctrl + c를 눌러 복사하세요", url );
+            });
+    JlongUrl.focus();
+});
+</script>
+</head>
+<body>
+  <div id="wrap">
+    <form id="f" name="f" method="post" action="test.UrlAction.do">
+      <input type="hidden" id="method" name="method" value="short" />
+      <fieldset>
+        <legend>Mr.TONG Shortener URL</legend>
+        <p>
+          <input type="text" id="longUrl" name="longUrl" style="width:500px;" />
+          <button type="submit">변환</button>
+        </p>
+      </fieldset>
+    </form>
+    <ul id="urlList"></ul>
+  </div>
+</body>
+</html>
