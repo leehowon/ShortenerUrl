@@ -17,6 +17,7 @@ public class UrlUtil
         while( key > 0 )
         {
             int remain = ( int )( key % BASE62 );
+            
             sb.append( ELEMENTS[remain] );
             key = key / BASE62;
         }
