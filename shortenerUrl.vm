@@ -70,7 +70,8 @@ J( document ).ready(function(){
                 J.getJSON( "test.UrlAction.do"
                 , { method: J( "#method" ).val(), longUrl: longUrl }
                 , function(data){
-                    var textElement = template.parse({ index: 1, shortUrl: data.short_url || "" });
+                    var shortUrl = data.short_url || ""
+                        , textElement = shortUrl ? template.parse({ index: 1, shortUrl: shortUrl }) : "";
 
                     J( "#urlList" ).html( textElement );
                 });
